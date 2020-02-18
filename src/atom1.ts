@@ -162,13 +162,11 @@ export default (ins: Feed) => {
 };
 
 const formatAuthor = (author: Author) => {
-  const { name, email, link } = author;
-
-  return {
-    name,
-    email,
-    uri: link
-  };
+  const result: { name?: string, uri?: string, email?: string } = {};
+  if (author.name) result.name = author.name;
+  if (author.email) result.email = author.email;
+  if (author.link) result.uri = author.link;
+  return result;
 };
 
 const formatCategory = (category: Category) => {

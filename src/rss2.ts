@@ -183,4 +183,3 @@ const formatCategory = (category: Category) => {
     }
   };
 };
-

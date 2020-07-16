@@ -1,7 +1,7 @@
 import * as convert from "xml-js";
 import { generator } from "./config";
 import { Feed } from "./feed";
-import { Item, Author } from "./typings";
+import { Item, Author, Category } from "./typings";
 
 export default (ins: Feed) => {
   const { options } = ins;
@@ -66,7 +66,7 @@ export default (ins: Feed) => {
    * Feed URL
    * http://validator.w3.org/feed/docs/warning/MissingAtomSelfLink.html
    */
-  const atomLink = options.feed || (options.feedLinks && options.feedLinks.atom);
+  const atomLink = options.feed || (options.feedLinks && options.feedLinks.rss);
   if (atomLink) {
     isAtom = true;
     base.rss.channel["atom:link"] = [
@@ -146,6 +146,16 @@ export default (ins: Feed) => {
         }
       });
     }
+    /**
+     * Item Category
+     * https://validator.w3.org/feed/docs/rss2.html#ltcategorygtSubelementOfLtitemgt
+     */
+    if (Array.isArray(entry.category)) {
+      item.category = [];
+      entry.category.map((category: Category) => {
+        item.category.push(formatCategory(category));
+      });
+    }
 
     if (entry.image) {
       item.enclosure = { _attributes: { url: entry.image } };
@@ -162,4 +172,14 @@ export default (ins: Feed) => {
     base.rss._attributes["xmlns:atom"] = "http://www.w3.org/2005/Atom";
   }
   return convert.js2xml(base, { compact: true, ignoreComment: true, spaces: 4 });
+};
+
+const formatCategory = (category: Category) => {
+  const { name, domain } = category;
+  return {
+    _text: name,
+    _attributes: {
+      domain
+    }
+  };
 };

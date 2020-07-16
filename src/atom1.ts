@@ -1,7 +1,7 @@
 import { generator } from "./config";
 import * as convert from "xml-js";
 import { Feed } from "./feed";
-import { Author, Item } from "./typings";
+import { Author, Item, Category } from "./typings";
 
 export default (ins: Feed) => {
   const { options } = ins;
@@ -126,6 +126,13 @@ export default (ins: Feed) => {
     //
 
     // category
+    if (Array.isArray(item.category)) {
+      entry.category = [];
+
+      item.category.map((category: Category) => {
+        entry.category.push(formatCategory(category));
+      });
+    }
 
     // contributor
     if (item.contributor && Array.isArray(item.contributor)) {
@@ -151,15 +158,34 @@ export default (ins: Feed) => {
     base.feed.entry.push(entry);
   });
 
-  return convert.js2xml(base, { compact: true, ignoreComment: true, spaces: 4 });
+  return convert.js2xml(base, { compact: true, ignoreComment: true, spaces: 4, attributeValueFn: function (value) { return encodeHTML(value) } });
 };
 
 const formatAuthor = (author: Author) => {
-  const { name, email, link } = author;
+  const result: { name?: string, uri?: string, email?: string } = {};
+  if (author.name) result.name = author.name;
+  if (author.email) result.email = author.email;
+  if (author.link) result.uri = author.link;
+  return result;
+};
+
+const formatCategory = (category: Category) => {
+  const { name, scheme, term } = category;
 
   return {
-    name,
-    email,
-    uri: link
+    _attributes: {
+      label: name,
+      scheme,
+      term
+    }
   };
 };
+
+const encodeHTML = (value: String) => {
+  return value.replace(/&quot;/g, '"')  // convert quote back before converting amp
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
